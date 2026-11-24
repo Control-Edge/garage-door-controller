@@ -55,7 +55,7 @@ void garageDoorCyclic(GarageDoor_ts *const ctx, uint16_t cycle_ms)
 
     case DOOR_CLOSING:
         if (ctx->obstruction)
-            enter(ctx, DOOR_OPENING); /* something in the way: go back up */
+            enter(ctx, DOOR_REVERSING); /* something in the way: stop, then go back up */
         else if (ctx->closedLimit)
             enter(ctx, DOOR_CLOSED);
         else if (pressed || timeout)

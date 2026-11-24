@@ -25,19 +25,37 @@ A button, a photo-eye and two limit switches in, a motor out. Modes: `CLOSED`, `
 
 The test is a sequence of 28 steps over 50 s, with a reusable input profile for a button press: open the door; close it and block the photo-eye halfway; press while the photo-eye is blocked; stop the door halfway and send it back; close it. Check steps confirm that the door is open, stopped or closed where it should be.
 
-## This version fails
+## Results
 
-This is the starting point of the tutorial, and the simulation **fails** on purpose. Every check step passes, but a rule doesn't:
+Every step and rule passes, and the program exits with 0:
 
 ```
 CppModel.Verify.never closes on an obstruction: PASS held at 5027 checked step(s)
-CppModel.Verify.reopens within 1 s: PASS 1 trigger(s) answered, slowest in 0 s (deadline 1 s)
-CppModel.Verify.mode sequence: FAIL illegal transition 3 → 1 at t=16.01 s
-CppModel.Verify: 2 of 3 rules passed
+CppModel.Verify.reopens within 1 s: PASS 1 trigger(s) answered, slowest in 0.5 s (deadline 1 s)
+CppModel.Verify.mode sequence: PASS 11 transition(s), all allowed; lowest dwell margin 0 s
+CppModel.Verify: 3 of 3 rules passed
 CppModel.Requirements: GD-1, GD-2, GD-3, GD-4
 ```
 
-The program exits with code 8, the number of the first failing step: step 8 blocks the photo-eye. The door does go back up, but the motor goes from full down to full up in one cycle, against GD-3. Can you find the cause in `garageDoor.c` before reading the [tutorial](https://www.cppmodel.com/docs/GarageDoorTutorial#the-fix)?
+`lowest dwell margin 0 s` means the rest before reversing is exactly the 0.5 s GD-3 asks for, with nothing to spare. Try a shorter pause without rebuilding:
+
+```bash
+./build/SimulateGarageDoor --inputs short-pause.json
+```
+
+```
+CppModel.Verify.mode sequence: FAIL left mode 5 after 0.3 s at t=16.31 s (min dwell 0.5 s)
+```
+
+## The bug the simulation found
+
+In the first version of `garageDoor.c` (tag [`0.0.1`](../../tree/0.0.1)), every check step passed, but a rule didn't:
+
+```
+CppModel.Verify.mode sequence: FAIL illegal transition 3 → 1 at t=16.01 s
+```
+
+The program exited with code 8, the number of the first failing step: step 8 blocks the photo-eye. The door did go back up, but an obstruction switched `CLOSING` straight to `OPENING`, and the motor went from full down to full up in one cycle, against GD-3. The controller had a `REVERSING` state for exactly this case, and `CLOSING` never entered it. The fix is that one line. To see the failing run, check out `0.0.1` and run it again. The [tutorial](https://www.cppmodel.com/docs/GarageDoorTutorial#the-fix) shows both runs on a graph.
 
 ## Files
 
@@ -45,6 +63,7 @@ The program exits with code 8, the number of the first failing step: step 8 bloc
 | ---- | ---------- |
 | `garageDoor.h`, `garageDoor.c` | The controller under test: plain C, no dependency on CppModel |
 | `SimulateGarageDoor.c` | The simulation: door model, test steps, verification rules and requirement IDs |
+| `short-pause.json` | A shorter reverse pause, for `--inputs`, to see the `mode sequence` rule fail |
 | `CMakeLists.txt` | Builds the simulation and registers it as a CTest test |
 
 ## Build and run
