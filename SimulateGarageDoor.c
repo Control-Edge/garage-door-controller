@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdio.h>
 #include <cppmodel/CModel.h>
 #include "garageDoor.h"
 
@@ -178,5 +179,7 @@ int main(void)
     int result = CppModel_getSimulationResult(simulation);
     CppModel_destroy(simulation);
 
-    return result;
+    if (result != 0)
+        printf("First failing step: %d\n", result);
+    return result == 0 ? 0 : 1;
 }

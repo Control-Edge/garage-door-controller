@@ -55,7 +55,7 @@ In the first version of `garageDoor.c` (tag [`0.0.1`](../../tree/0.0.1)), every 
 CppModel.Verify.mode sequence: FAIL illegal transition 3 → 1 at t=16.01 s
 ```
 
-The program exited with code 8, the number of the first failing step: step 8 blocks the photo-eye. The door did go back up, but an obstruction switched `CLOSING` straight to `OPENING`, and the motor went from full down to full up in one cycle, against GD-3. The controller had a `REVERSING` state for exactly this case, and `CLOSING` never entered it. The fix is that one line. To see the failing run, check out `0.0.1` and run it again. The [tutorial](https://www.cppmodel.com/docs/GarageDoorTutorial#the-fix) shows both runs on a graph.
+The first failing step was step 8, which blocks the photo-eye. The door did go back up, but an obstruction switched `CLOSING` straight to `OPENING`, and the motor went from full down to full up in one cycle, against GD-3. The controller had a `REVERSING` state for exactly this case, and `CLOSING` never entered it. The fix is that one line. To see the failing run, check out `0.0.1` and run it again. The [tutorial](https://www.cppmodel.com/docs/GarageDoorTutorial#the-fix) shows both runs on a graph.
 
 ## Files
 
@@ -87,7 +87,7 @@ You need a C compiler, CMake 3.21 or later, and the CppModel SDK 0.18.0 or later
    ./build/SimulateGarageDoor
    ```
 
-On the first run, the program prints a login link; open it to connect to your workspace. When the run finishes, it prints each rule's outcome, the requirements it verified and a link to the results. The exit code is 0 only when every step and rule passed, so `ctest --test-dir build` runs it as a test.
+On the first run, the program prints a login link; open it to connect to your workspace. When the run finishes, it prints each rule's outcome, the requirements it verified and a link to the results. The exit code is 0 only when every step and rule passed, so `ctest --test-dir build` runs it as a test. A failed run also prints the number of its first failing step (`First failing step: 8`), and exits with 1.
 
 Each run also writes the requirements it verified, and whether it passed, to `cppmodel-requirements.json`, which a CI job can collect into a coverage report (see [Requirements](https://www.cppmodel.com/docs/Verification#requirements)).
 
